@@ -653,6 +653,21 @@ func NewWalletPassphraseChangeCmd(oldPassphrase, newPassphrase string) *WalletPa
 	}
 }
 
+// NewTransferTransactionCmd returns a new instance which can be used to issue a
+// transfertransaction JSON-RPC command.
+func NewTransferTransactionCmd(address string, txID string) *TransferTransactionCmd {
+	return &TransferTransactionCmd{
+		Address: address,
+		TxID:    txID,
+	}
+}
+
+// TransferTransactionCmd defines the transfertransaction JSON-RPC command.
+type TransferTransactionCmd struct {
+	Address string
+	TxID    string
+}
+
 func init() {
 	// The commands in this file are only usable with a wallet server.
 	flags := UFWalletOnly
@@ -696,4 +711,5 @@ func init() {
 	MustRegisterCmd("walletlock", (*WalletLockCmd)(nil), flags)
 	MustRegisterCmd("walletpassphrase", (*WalletPassphraseCmd)(nil), flags)
 	MustRegisterCmd("walletpassphrasechange", (*WalletPassphraseChangeCmd)(nil), flags)
+	MustRegisterCmd("transfertransaction", (*TransferTransactionCmd)(nil), flags)
 }

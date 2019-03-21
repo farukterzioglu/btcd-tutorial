@@ -2267,6 +2267,47 @@ func (c *Client) GetInfo() (*btcjson.InfoWalletResult, error) {
 	return c.GetInfoAsync().Receive()
 }
 
+// FutureTransferTransactionResult is a future promise to deliver the result of a
+// TransferTransactionAsync RPC invocation (or an applicable error).
+type FutureTransferTransactionResult chan *response
+
+// Receive waits for the response promised by the future and returns the hash
+// of the transaction transferring the transaction of the passed id to the given address.
+func (r FutureTransferTransactionResult) Receive() (*chainhash.Hash, error) {
+	res, err := receiveFuture(r)
+	if err != nil {
+		return nil, err
+	}
+
+	// Unmarshal result as a string.
+	var txHash string
+	err = json.Unmarshal(res, &txHash)
+	if err != nil {
+		return nil, err
+	}
+
+	return chainhash.NewHashFromStr(txHash)
+}
+
+// TransferTransactionAsync returns an instance of a type that can be used to get the
+// result of the RPC at some future time by invoking the Receive function on the
+// returned instance.
+//
+// See TransferTransaction for the blocking version and more details.
+func (c *Client) TransferTransactionAsync(address btcutil.Address, txID string) FutureTransferTransactionResult {
+	addr := address.EncodeAddress()
+	cmd := btcjson.NewTransferTransactionCmd(addr, txID)
+	return c.sendCmd(cmd)
+}
+
+// TransferTransaction transfers the transaction of the passed id to the given address.
+//
+// NOTE: This function requires to the wallet to be unlocked.  See the
+// WalletPassphrase function for more details.
+func (c *Client) TransferTransaction(address btcutil.Address, txID string) (*chainhash.Hash, error) {
+	return c.TransferTransactionAsync(address, txID).Receive()
+}
+
 // TODO(davec): Implement
 // backupwallet (NYI in btcwallet)
 // encryptwallet (Won't be supported by btcwallet since it's always encrypted)
